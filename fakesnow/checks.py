@@ -106,7 +106,10 @@ def _missing_qualifiers(node: exp.Table) -> tuple[bool, bool]:
             no_database = not node.args.get("db")
             no_schema = False
         else:
-            raise AssertionError(f"Unexpected parent kind: {parent_kind.name}")
+            # "USE ROLE/WAREHOUSE" and friends name a role or warehouse rather than a table,
+            # so there's nothing to qualify
+            no_database = False
+            no_schema = False
 
     elif node.parent.key == "show":
         # don't require a database or schema for SHOW
