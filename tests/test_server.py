@@ -505,9 +505,8 @@ def test_server_rowcount(scur: snowflake.connector.cursor.SnowflakeCursor):
     ],
 )
 def test_server_query_response_has_use_statement_type_id(server: dict, sql: str) -> None:
-    session_parameters = server.get("session_parameters", {}) | {"nop_regexes": [r"use (role|warehouse)"]}
     with snowflake.connector.connect(
-        **(server | {"session_parameters": session_parameters}),
+        **server,
         database="db1",
         schema="schema1",
     ) as conn:
