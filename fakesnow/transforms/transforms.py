@@ -15,6 +15,10 @@ from fakesnow.variables import Variables
 
 SUCCESS_NOP = sqlglot.parse_one("SELECT 'Statement executed successfully.' as status")
 
+# the version fakesnow reports as the snowflake server version, both from CURRENT_VERSION() and in
+# the login response. clients gate on the major version, eg: flyway won't run below snowflake 3.
+SERVER_VERSION = "10.0.0"
+
 
 def alias_in_join(expression: Expr) -> Expr:
     if (
@@ -163,7 +167,7 @@ def current_version(expression: Expr) -> Expr:
     """
 
     if isinstance(expression, exp.CurrentVersion):
-        return exp.Literal(this="0.0.0", is_string=True)
+        return exp.Literal(this=SERVER_VERSION, is_string=True)
 
     return expression
 

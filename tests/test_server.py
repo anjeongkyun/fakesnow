@@ -18,6 +18,7 @@ from dirty_equals import IsDatetime, IsUUID
 from pandas.testing import assert_frame_equal
 from snowflake.connector.cursor import ResultMetadata
 
+from fakesnow.transforms import SERVER_VERSION
 from tests.utils import indent
 
 
@@ -160,6 +161,20 @@ def test_server_client_session_keep_alive(server: dict) -> None:
     with snowflake.connector.connect(**server | {"client_session_keep_alive": True}):
         # shouldn't error
         pass
+
+
+def test_server_login_reports_server_version(server: dict) -> None:
+    # the jdbc driver reads data.serverVersion from the login response and serves it as
+    # DatabaseMetaData.getDatabaseProductVersion(). the python connector ignores it, so assert
+    # on the response itself.
+    response = requests.post(
+        f"http://{server['host']}:{server['port']}/session/v1/login-request",
+        json={"data": {"ACCOUNT_NAME": "fakesnow", "LOGIN_NAME": "fake", "SESSION_PARAMETERS": {}}},
+        timeout=5,
+    )
+
+    assert response.status_code == 200
+    assert response.json()["data"]["serverVersion"] == SERVER_VERSION
 
 
 def test_server_executemany_qmark(server: dict) -> None:

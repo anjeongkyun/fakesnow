@@ -25,6 +25,7 @@ from fakesnow.fakes import FakeSnowflakeConnection
 from fakesnow.instance import FakeSnow
 from fakesnow.rowtype import ColumnInfo, describe_as_rowtype
 from fakesnow.statement_type import DML_TYPE_IDS, statement_type_id
+from fakesnow.transforms import SERVER_VERSION
 
 logger = logging.getLogger("fakesnow.server")
 # use same format as uvicorn
@@ -67,6 +68,9 @@ async def login_request(request: Request) -> JSONResponse:
         {
             "data": {
                 "token": token,
+                # clients serve this as the jdbc database product version, and some refuse to run
+                # against a version they consider too old
+                "serverVersion": SERVER_VERSION,
                 "parameters": [
                     {"name": "AUTOCOMMIT", "value": autocommit},
                     {"name": "CLIENT_SESSION_KEEP_ALIVE_HEARTBEAT_FREQUENCY", "value": 3600},
