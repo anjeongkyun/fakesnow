@@ -12,7 +12,6 @@ import snowflake.connector.cursor
 import snowflake.connector.pandas_tools
 
 import fakesnow
-from fakesnow.transforms import SERVER_VERSION
 
 
 def test_close_conn(conn: snowflake.connector.SnowflakeConnection):
@@ -147,10 +146,9 @@ def test_connect_information_schema():
 def test_connect_current_version(cur: snowflake.connector.cursor.SnowflakeCursor):
     version = cur.execute("SELECT CURRENT_VERSION()").fetchone()
 
-    assert version
-    assert tuple(int(part) for part in version[0].split(".")) == tuple(int(part) for part in SERVER_VERSION.split("."))
+    assert version == ("10.0.0",)
     # clients gate on the major version, so it needs to look like a current snowflake
-    assert int(SERVER_VERSION.split(".")[0]) >= 10
+    assert int(version[0].split(".")[0]) >= 10
 
 
 def test_connect_then_unset_schema(_fakesnow: None):

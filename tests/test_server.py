@@ -18,7 +18,6 @@ from dirty_equals import IsDatetime, IsUUID
 from pandas.testing import assert_frame_equal
 from snowflake.connector.cursor import ResultMetadata
 
-from fakesnow.transforms import SERVER_VERSION
 from tests.utils import indent
 
 
@@ -174,7 +173,7 @@ def test_server_login_reports_server_version(server: dict) -> None:
     )
 
     assert response.status_code == 200
-    assert response.json()["data"]["serverVersion"] == SERVER_VERSION
+    assert response.json()["data"]["serverVersion"] == "10.0.0"
 
 
 def test_server_executemany_qmark(server: dict) -> None:
