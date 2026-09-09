@@ -147,8 +147,6 @@ def test_connect_current_version(cur: snowflake.connector.cursor.SnowflakeCursor
     version = cur.execute("SELECT CURRENT_VERSION()").fetchone()
 
     assert version == ("10.0.0",)
-    # clients gate on the major version, so it needs to look like a current snowflake
-    assert int(version[0].split(".")[0]) >= 10
 
 
 def test_connect_then_unset_schema(_fakesnow: None):
