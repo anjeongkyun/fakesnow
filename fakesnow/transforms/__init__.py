@@ -24,6 +24,7 @@ from fakesnow.transforms.stage import (
     put_stage as put_stage,
 )
 from fakesnow.transforms.transforms import (
+    SERVER_VERSION as SERVER_VERSION,
     SUCCESS_NOP as SUCCESS_NOP,
     alias_in_join as alias_in_join,
     alter_session as alter_session,

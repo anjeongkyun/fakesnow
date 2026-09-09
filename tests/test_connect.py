@@ -146,8 +146,7 @@ def test_connect_information_schema():
 def test_connect_current_version(cur: snowflake.connector.cursor.SnowflakeCursor):
     version = cur.execute("SELECT CURRENT_VERSION()").fetchone()
 
-    assert version
-    assert tuple(int(part) for part in version[0].split(".")) == (0, 0, 0)
+    assert version == ("10.0.0",)
 
 
 def test_connect_then_unset_schema(_fakesnow: None):

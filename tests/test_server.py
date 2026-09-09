@@ -162,6 +162,20 @@ def test_server_client_session_keep_alive(server: dict) -> None:
         pass
 
 
+def test_server_login_reports_server_version(server: dict) -> None:
+    # the jdbc driver reads data.serverVersion from the login response and serves it as
+    # DatabaseMetaData.getDatabaseProductVersion(). the python connector ignores it, so assert
+    # on the response itself.
+    response = requests.post(
+        f"http://{server['host']}:{server['port']}/session/v1/login-request",
+        json={"data": {"ACCOUNT_NAME": "fakesnow", "LOGIN_NAME": "fake", "SESSION_PARAMETERS": {}}},
+        timeout=5,
+    )
+
+    assert response.status_code == 200
+    assert response.json()["data"]["serverVersion"] == "10.0.0"
+
+
 def test_server_executemany_qmark(server: dict) -> None:
     # the connector reads CLIENT_STAGE_ARRAY_BINDING_THRESHOLD from the login response to decide
     # between binding the values inline and staging them, then sends the inline values as an
