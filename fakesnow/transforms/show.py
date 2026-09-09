@@ -16,6 +16,7 @@ def fs_global_creation_sql() -> str:
         {SQL_CREATE_VIEW_SHOW_FUNCTIONS};
         {SQL_CREATE_VIEW_SHOW_SCHEMAS};
         {SQL_CREATE_VIEW_SHOW_PROCEDURES};
+        {SQL_CREATE_VIEW_SHOW_SEQUENCES};
     """
 
 
@@ -315,6 +316,67 @@ def show_procedures(expression: Expr) -> Expr:
         )
 
     return expression
+
+
+# see https://docs.snowflake.com/en/sql-reference/sql/show-sequences
+# the docs don't list the output columns, so these follow the shape of the other SHOW views.
+SQL_CREATE_VIEW_SHOW_SEQUENCES = """
+create view if not exists _fs_global._fs_information_schema._fs_show_sequences as
+select
+    to_timestamp(0)::timestamptz as created_on,
+    sequence_name as name,
+    schema_name,
+    database_name,
+    start_value::varchar as next_value,
+    increment_by::varchar as interval,
+    'SYSADMIN' as owner,
+    coalesce(comment, '') as comment,
+    'ROLE' as owner_role_type,
+    'N' as ordered
+from duckdb_sequences()
+where not database_name in ('system', 'temp')
+  and not schema_name in ('main', '_fs_information_schema')
+"""
+
+
+def show_sequences(expression: Expr, current_database: str | None, current_schema: str | None) -> Expr:
+    """Transform SHOW SEQUENCES to a select from the fake _fs_show_sequences view.
+
+    See https://docs.snowflake.com/en/sql-reference/sql/show-sequences
+    """
+    if not (isinstance(expression, exp.Show) and expression.name.upper() == "SEQUENCES"):
+        return expression
+
+    scope_kind = expression.args.get("scope_kind")
+    table = expression.find(exp.Table)
+
+    if scope_kind == "DATABASE":
+        catalog = (table and table.name) or current_database
+        schema = None
+    elif scope_kind == "SCHEMA" and table:
+        catalog = table.db or current_database
+        schema = table.name
+    elif scope_kind == "ACCOUNT":
+        catalog = None
+        schema = None
+    else:
+        # no explicit scope - show the current database and schema only
+        catalog = current_database
+        schema = current_schema
+
+    where = ["1=1"]
+    if catalog:
+        where.append(f"database_name = '{catalog}'")
+    if schema:
+        where.append(f"schema_name = '{schema}'")
+
+    query = f"""
+        SELECT *
+        from _fs_global._fs_information_schema._fs_show_sequences
+        where {" AND ".join(where)}
+    """
+
+    return sqlglot.parse_one(query, read="duckdb")
 
 
 SQL_CREATE_VIEW_SHOW_SCHEMAS = """

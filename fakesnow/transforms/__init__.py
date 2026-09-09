@@ -13,6 +13,7 @@ from fakesnow.transforms.show import (
     show_keys as show_keys,
     show_procedures as show_procedures,
     show_schemas as show_schemas,
+    show_sequences as show_sequences,
     show_stages as show_stages,
     show_tables_etc as show_tables_etc,
     show_users as show_users,
