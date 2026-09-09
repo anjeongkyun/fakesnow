@@ -895,6 +895,17 @@ def test_use() -> None:
         == "SET schema = 'foo.bar'"
     )
 
+    # roles and warehouses have no duckdb equivalent, so they're a NOP rather than an error
+    assert (
+        sqlglot.parse_one("use role analyst").transform(set_schema, current_database="marts").sql()
+        == "SELECT 'Statement executed successfully.' AS status"
+    )
+
+    assert (
+        sqlglot.parse_one("use warehouse compute_wh").transform(set_schema, current_database="marts").sql()
+        == "SELECT 'Statement executed successfully.' AS status"
+    )
+
 
 def test__get_to_number_args() -> None:
     default_precision = exp.Literal(this="38", is_string=False)

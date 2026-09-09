@@ -628,6 +628,17 @@ def test_unquoted_identifiers_are_upper_cased(dcur: snowflake.connector.cursor.S
     ]
 
 
+def test_use_role_and_warehouse(cur: snowflake.connector.cursor.SnowflakeCursor):
+    # duckdb has no roles or warehouses, but clients still issue these on connect, so
+    # they succeed without changing the current database or schema
+    for sql in ['use role "duckdb"', "use role analyst", "use warehouse compute_wh"]:
+        cur.execute(sql)
+        assert cur.fetchall() == [("Statement executed successfully.",)]
+
+    cur.execute("select current_database(), current_schema()")
+    assert cur.fetchall() == [("DB1", "SCHEMA1")]
+
+
 def test_use_invalid_schema(_fakesnow: None):
     # database will be created but not schema
     with snowflake.connector.connect(database="marts") as conn, conn.cursor() as cur:

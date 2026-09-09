@@ -1043,6 +1043,8 @@ def set_schema(expression: Expr, current_database: str | None) -> Expr:
         "SET schema = 'foo.bar'"
         >>> sqlglot.parse_one("USE DATABASE marts").transform(set_schema).sql()
         "SET schema = 'marts.main'"
+        >>> sqlglot.parse_one("USE ROLE analyst").transform(set_schema).sql()
+        "SELECT 'Statement executed successfully.' AS status"
 
         See tests for more examples.
     Args:
@@ -1058,8 +1060,11 @@ def set_schema(expression: Expr, current_database: str | None) -> Expr:
         and (kind := expression.args.get("kind"))
         and isinstance(kind, exp.Var)
         and kind.name
-        and kind.name.upper() in ["SCHEMA", "DATABASE"]
     ):
+        if kind.name.upper() not in ["SCHEMA", "DATABASE"]:
+            # duckdb has no roles or warehouses, so USE ROLE/WAREHOUSE is a NOP
+            return SUCCESS_NOP
+
         assert expression.this, f"No identifier for USE expression {expression}"
 
         if kind.name.upper() == "DATABASE":
