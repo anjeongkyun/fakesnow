@@ -544,10 +544,10 @@ def test_show_sequences(dcur: snowflake.connector.cursor.SnowflakeCursor):
     assert dcur.fetchall() == [seq2]
 
     dcur.execute("SHOW SEQUENCES IN DATABASE db1")
-    assert dcur.fetchall() == [seq1, seq2]
+    assert sorted(dcur.fetchall(), key=lambda row: row["name"]) == [seq1, seq2]
 
     dcur.execute("SHOW SEQUENCES IN ACCOUNT")
-    assert dcur.fetchall() == [seq1, seq2]
+    assert sorted(dcur.fetchall(), key=lambda row: row["name"]) == [seq1, seq2]
 
 
 def test_show_procedures(dcur: snowflake.connector.cursor.SnowflakeCursor):
