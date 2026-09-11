@@ -1075,18 +1075,23 @@ def set_schema(expression: Expr, current_database: str | None) -> Expr:
             )
         else:
             # SCHEMA
-            if db := expression.this.args.get("db"):  # noqa: SIM108
+            if db := expression.this.args.get("db"):
                 db_name = db.name
+                set_database = db_name
             else:
                 # isn't qualified with a database
                 db_name = current_database
+                set_database = None
 
             # assertion always true because check_db_schema is called before this
             assert db_name
 
             schema = expression.this.name
             return exp.Command(
-                this="SET", expression=exp.Literal.string(f"schema = '{db_name}.{schema}'"), set_schema=schema
+                this="SET",
+                expression=exp.Literal.string(f"schema = '{db_name}.{schema}'"),
+                set_database=set_database,
+                set_schema=schema,
             )
 
     return expression

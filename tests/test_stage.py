@@ -10,8 +10,10 @@ from dirty_equals import IsDatetime, IsNow
 def test_create_stage(dcur: snowflake.connector.cursor.SnowflakeCursor):
     dcur.execute("CREATE DATABASE db2")
     dcur.execute("CREATE SCHEMA db2.schema2")
+    dcur.execute("USE SCHEMA db1.schema1")
     dcur.execute("CREATE SCHEMA schema3")
 
+    dcur.execute("USE SCHEMA db1.schema1")
     dcur.execute("CREATE STAGE stage1")
     assert dcur.fetchall() == [{"status": "Stage area STAGE1 successfully created."}]
 
@@ -104,6 +106,29 @@ def test_create_stage(dcur: snowflake.connector.cursor.SnowflakeCursor):
         stage3,
         stage4,
     ]
+
+
+def test_create_stage_or_replace(dcur: snowflake.connector.cursor.DictCursor):
+    dcur.execute("CREATE STAGE stage1")
+
+    dcur.execute("CREATE OR REPLACE STAGE stage1 URL='s3://bucket/path/'")
+    assert dcur.fetchall() == [{"status": "Stage area STAGE1 successfully created."}]
+
+    dcur.execute("SHOW STAGES")
+    rows = dcur.fetchall()
+    assert len(rows) == 1
+    assert rows[0]["url"] == "s3://bucket/path/"
+
+
+def test_create_stage_if_not_exists(dcur: snowflake.connector.cursor.DictCursor):
+    dcur.execute("CREATE STAGE IF NOT EXISTS stage1")
+    assert dcur.fetchall() == [{"status": "Stage area STAGE1 successfully created."}]
+
+    dcur.execute("CREATE STAGE IF NOT EXISTS stage1")
+    assert dcur.fetchall() == [{"status": "STAGE1 already exists, statement succeeded."}]
+
+    dcur.execute("SHOW STAGES")
+    assert len(dcur.fetchall()) == 1
 
 
 def test_create_stage_qmark_quoted(_fakesnow: None):

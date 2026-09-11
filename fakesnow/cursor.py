@@ -53,6 +53,7 @@ SQL_CREATED_SECRET = Template("SELECT 'Secret ${name} successfully created.' as 
 SQL_CREATED_TABLE = Template("SELECT 'Table ${name} successfully created.' as 'status'")
 SQL_CREATED_VIEW = Template("SELECT 'View ${name} successfully created.' as 'status'")
 SQL_CREATED_STAGE = Template("SELECT 'Stage area ${name} successfully created.' as status")
+SQL_OBJECT_EXISTS = Template("SELECT '${name} already exists, statement succeeded.' as status")
 SQL_DROPPED = Template("SELECT '${name} successfully dropped.' as 'status'")
 SQL_INSERTED_ROWS = Template("SELECT ${count} as 'number of rows inserted'")
 SQL_UPDATED_ROWS = Template("SELECT ${count} as 'number of rows updated', 0 as 'number of multi-joined rows updated'")
@@ -506,7 +507,7 @@ class FakeSnowflakeCursor:
             self._conn.schema_set = False
             result_sql = SQL_SUCCESS
 
-        elif set_schema := transformed.args.get("set_schema"):
+        if set_schema := transformed.args.get("set_schema"):
             self._conn._schema = set_schema
             self._conn.schema_set = True
             result_sql = SQL_SUCCESS
@@ -522,13 +523,16 @@ class FakeSnowflakeCursor:
 
         elif stage_name := transformed.args.get("create_stage_name"):
             (affected_count,) = self._duck_conn.fetchall()[0]
-            if affected_count == 0:
+            if affected_count > 0:
+                result_sql = SQL_CREATED_STAGE.substitute(name=stage_name)
+            elif transformed.args.get("create_stage_if_not_exists"):
+                result_sql = SQL_OBJECT_EXISTS.substitute(name=stage_name)
+            else:
                 raise snowflake.connector.errors.ProgrammingError(
                     msg=f"SQL compilation error:\nObject '{stage_name}' already exists.",
                     errno=2002,
                     sqlstate="42710",
                 )
-            result_sql = SQL_CREATED_STAGE.substitute(name=stage_name)
 
         elif stage_name := transformed.args.get("list_stage_name") or transformed.args.get("put_stage_name"):
             if self._duck_conn.to_arrow_table().num_rows != 1:
@@ -567,6 +571,16 @@ class FakeSnowflakeCursor:
         elif eid := transformed.find(exp.Identifier, bfs=False):
             ident = eid.name
             if cmd == "CREATE SCHEMA" and ident:
+                table = transformed.find(exp.Table)
+                assert table and table.db
+                database = table.catalog or self._conn.database
+                assert database
+                schema = table.db
+                self._duck_conn.execute(f"SET schema='{database}.{schema}'")
+                self._conn.database = database
+                self._conn.database_set = True
+                self._conn._schema = schema
+                self._conn.schema_set = True
                 result_sql = SQL_CREATED_SCHEMA.substitute(name=ident)
 
             elif cmd == "CREATE SEQUENCE" and ident:

@@ -19,6 +19,7 @@ def test_show_columns(dcur: snowflake.connector.cursor.SnowflakeCursor):
     dcur.execute("create view view1 as select xboolean from example")
     dcur.execute("create schema schema3")
     dcur.execute("create table schema3.table3 (x int)")
+    dcur.execute("USE SCHEMA db1.schema1")
 
     common_fields = {
         "table_name": "EXAMPLE",
@@ -254,6 +255,7 @@ def test_show_primary_keys(dcur: snowflake.connector.cursor.SnowflakeCursor):
         },
     ]
 
+    dcur.execute("USE SCHEMA db1.schema1")
     dcur.execute("show primary keys")
     assert dcur.fetchall() == result[:2]
 
@@ -387,6 +389,7 @@ def test_show_tables(dcur: snowflake.connector.cursor.SnowflakeCursor):
     dcur.execute("create database db2")
     dcur.execute("create schema db2.schema2")
     dcur.execute("create table db2.schema2.table2(x int)")
+    dcur.execute("USE SCHEMA db1.schema1")
     dcur.execute("create schema schema3")
     dcur.execute("create table schema3.table3(x int)")
 
@@ -420,6 +423,7 @@ def test_show_tables(dcur: snowflake.connector.cursor.SnowflakeCursor):
     }
 
     # show in current db/schema
+    dcur.execute("USE SCHEMA db1.schema1")
     dcur.execute("show terse tables")
     assert dcur.fetchall() == [table1]
 
@@ -585,7 +589,7 @@ def test_show_views(dcur: snowflake.connector.cursor.SnowflakeCursor):
             "schema_name": "SCHEMA1",
         },
     ]
-    assert dcur.fetchall() == objects
+    assert dcur.fetchall() == []
     dcur.execute("show terse views in db1.schema1")
     assert dcur.fetchall() == objects
     assert [r.name for r in dcur.description] == [
