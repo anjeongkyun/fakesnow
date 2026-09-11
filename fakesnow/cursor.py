@@ -356,6 +356,7 @@ class FakeSnowflakeCursor:
             .transform(lambda e: transforms.show_tables_etc(e, self._conn.database, self._conn.schema))
             .transform(lambda e: transforms.show_columns(e, self._conn.database, self._conn.schema))
             .transform(lambda e: transforms.show_stages(e, self._conn.database, self._conn.schema))
+            .transform(lambda e: transforms.show_sequences(e, self._conn.database, self._conn.schema))
             # TODO collapse into a single show_keys function
             .transform(lambda e: transforms.show_keys(e, self._conn.database, kind="PRIMARY"))
             .transform(lambda e: transforms.show_keys(e, self._conn.database, kind="UNIQUE"))

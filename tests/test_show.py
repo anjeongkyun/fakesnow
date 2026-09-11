@@ -516,6 +516,40 @@ def test_show_functions(dcur: snowflake.connector.cursor.SnowflakeCursor):
     assert [r.name for r in dcur.description] == expected_columns
 
 
+def test_show_sequences(dcur: snowflake.connector.cursor.SnowflakeCursor):
+    dcur.execute("CREATE SEQUENCE seq1 START 5 INCREMENT 2")
+    dcur.execute("CREATE SCHEMA schema2")
+    dcur.execute("CREATE SEQUENCE schema2.seq2")
+
+    seq1 = {
+        "name": "SEQ1",
+        "database_name": "DB1",
+        "schema_name": "SCHEMA1",
+        "next_value": 5,
+        "interval": 2,
+        "created_on": datetime.datetime(1970, 1, 1, 0, 0, tzinfo=pytz.utc),
+        "owner": "SYSADMIN",
+        "comment": "",
+        "owner_role_type": "ROLE",
+        "ordered": "N",
+    }
+    seq2 = {**seq1, "name": "SEQ2", "schema_name": "SCHEMA2", "next_value": 1, "interval": 1}
+
+    dcur.execute("SHOW SEQUENCES")
+    # CREATE SCHEMA makes schema2 the current schema.
+    assert dcur.fetchall() == [seq2]
+    assert [r.name for r in dcur.description] == list(seq1.keys())
+
+    dcur.execute("SHOW SEQUENCES IN SCHEMA schema2")
+    assert dcur.fetchall() == [seq2]
+
+    dcur.execute("SHOW SEQUENCES IN DATABASE db1")
+    assert sorted(cast(list[dict], dcur.fetchall()), key=lambda row: row["name"]) == [seq1, seq2]
+
+    dcur.execute("SHOW SEQUENCES IN ACCOUNT")
+    assert sorted(cast(list[dict], dcur.fetchall()), key=lambda row: row["name"]) == [seq1, seq2]
+
+
 def test_show_procedures(dcur: snowflake.connector.cursor.SnowflakeCursor):
     dcur.execute("show procedures")
     dcur.fetchall()
