@@ -506,7 +506,7 @@ class FakeSnowflakeCursor:
             self._conn.schema_set = False
             result_sql = SQL_SUCCESS
 
-        elif set_schema := transformed.args.get("set_schema"):
+        if set_schema := transformed.args.get("set_schema"):
             self._conn._schema = set_schema
             self._conn.schema_set = True
             result_sql = SQL_SUCCESS
@@ -570,6 +570,16 @@ class FakeSnowflakeCursor:
         elif eid := transformed.find(exp.Identifier, bfs=False):
             ident = eid.name
             if cmd == "CREATE SCHEMA" and ident:
+                table = transformed.find(exp.Table)
+                assert table and table.db
+                database = table.catalog or self._conn.database
+                assert database
+                schema = table.db
+                self._duck_conn.execute(f"SET schema='{database}.{schema}'")
+                self._conn.database = database
+                self._conn.database_set = True
+                self._conn._schema = schema
+                self._conn.schema_set = True
                 result_sql = SQL_CREATED_SCHEMA.substitute(name=ident)
 
             elif cmd == "CREATE SEQUENCE" and ident:

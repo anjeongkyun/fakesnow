@@ -87,6 +87,7 @@ def test_info_schema_columns(dcur: snowflake.connector.cursor.DictCursor):
     dcur.execute("CREATE SCHEMA db2.schema2")
     dcur.execute("CREATE TABLE db2.schema2.bar (id INTEGER)")
 
+    dcur.execute("USE SCHEMA db1.schema1")
     dcur.execute(
         "SELECT table_catalog, table_schema, table_name, column_name FROM information_schema.columns where column_name = 'ID'"
     )
@@ -231,6 +232,7 @@ def test_info_schema_tables(dcur: snowflake.connector.cursor.DictCursor):
     dcur.execute("CREATE SCHEMA db2.schema2")
     dcur.execute("CREATE TABLE db2.schema2.bar (name VARCHAR)")
 
+    dcur.execute("USE SCHEMA db1.schema1")
     dcur.execute("SELECT * FROM information_schema.tables")
 
     assert dcur.fetchall() == [
@@ -283,6 +285,7 @@ def test_info_schema_views(dcur: snowflake.connector.cursor.DictCursor):
     dcur.execute("CREATE TABLE db2.schema2.foo (id INTEGER, name VARCHAR)")
     dcur.execute("CREATE VIEW db2.schema2.baz AS SELECT * FROM db2.schema2.foo WHERE id > 5")
 
+    dcur.execute("USE SCHEMA db1.schema1")
     dcur.execute("SELECT * FROM information_schema.views")
 
     assert dcur.fetchall() == [

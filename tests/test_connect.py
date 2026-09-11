@@ -301,3 +301,20 @@ def test_current_database_schema(conn: snowflake.connector.SnowflakeConnection):
         assert cur.fetchall() == [
             {"current_database()": "DB1", "current_schema()": "SCHEMA1"},
         ]
+
+
+def test_create_schema_makes_it_current(dcur: snowflake.connector.cursor.DictCursor):
+    dcur.execute("CREATE SCHEMA schema2")
+    dcur.execute("SELECT CURRENT_DATABASE(), CURRENT_SCHEMA()")
+
+    assert dcur.fetchall() == [{"current_database()": "DB1", "current_schema()": "SCHEMA2"}]
+
+
+def test_use_qualified_schema_updates_current_database(dcur: snowflake.connector.cursor.DictCursor):
+    dcur.execute("CREATE DATABASE db2")
+    dcur.execute("CREATE SCHEMA db2.schema2")
+    dcur.execute("USE SCHEMA db1.schema1")
+    dcur.execute("USE SCHEMA db2.schema2")
+    dcur.execute("SELECT CURRENT_DATABASE(), CURRENT_SCHEMA()")
+
+    assert dcur.fetchall() == [{"current_database()": "DB2", "current_schema()": "SCHEMA2"}]

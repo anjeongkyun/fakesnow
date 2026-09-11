@@ -10,8 +10,10 @@ from dirty_equals import IsDatetime, IsNow
 def test_create_stage(dcur: snowflake.connector.cursor.SnowflakeCursor):
     dcur.execute("CREATE DATABASE db2")
     dcur.execute("CREATE SCHEMA db2.schema2")
+    dcur.execute("USE SCHEMA db1.schema1")
     dcur.execute("CREATE SCHEMA schema3")
 
+    dcur.execute("USE SCHEMA db1.schema1")
     dcur.execute("CREATE STAGE stage1")
     assert dcur.fetchall() == [{"status": "Stage area STAGE1 successfully created."}]
 
