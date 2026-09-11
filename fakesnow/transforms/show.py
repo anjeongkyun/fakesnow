@@ -319,16 +319,16 @@ def show_procedures(expression: Expr) -> Expr:
 
 
 # see https://docs.snowflake.com/en/sql-reference/sql/show-sequences
-# the docs don't list the output columns, so these follow the shape of the other SHOW views.
+# Column names, order, and types match the Snowflake connector response.
 SQL_CREATE_VIEW_SHOW_SEQUENCES = """
 create view if not exists _fs_global._fs_information_schema._fs_show_sequences as
 select
-    to_timestamp(0)::timestamptz as created_on,
     sequence_name as name,
-    schema_name,
     database_name,
-    start_value::varchar as next_value,
-    increment_by::varchar as interval,
+    schema_name,
+    start_value as next_value,
+    increment_by as interval,
+    to_timestamp(0)::timestamptz as created_on,
     'SYSADMIN' as owner,
     coalesce(comment, '') as comment,
     'ROLE' as owner_role_type,

@@ -522,22 +522,22 @@ def test_show_sequences(dcur: snowflake.connector.cursor.SnowflakeCursor):
     dcur.execute("CREATE SEQUENCE schema2.seq2")
 
     seq1 = {
-        "created_on": datetime.datetime(1970, 1, 1, 0, 0, tzinfo=pytz.utc),
         "name": "SEQ1",
-        "schema_name": "SCHEMA1",
         "database_name": "DB1",
-        "next_value": "5",
-        "interval": "2",
+        "schema_name": "SCHEMA1",
+        "next_value": 5,
+        "interval": 2,
+        "created_on": datetime.datetime(1970, 1, 1, 0, 0, tzinfo=pytz.utc),
         "owner": "SYSADMIN",
         "comment": "",
         "owner_role_type": "ROLE",
         "ordered": "N",
     }
-    seq2 = {**seq1, "name": "SEQ2", "schema_name": "SCHEMA2", "next_value": "1", "interval": "1"}
+    seq2 = {**seq1, "name": "SEQ2", "schema_name": "SCHEMA2", "next_value": 1, "interval": 1}
 
     dcur.execute("SHOW SEQUENCES")
-    # only the current database and schema when no scope is given
-    assert dcur.fetchall() == [seq1]
+    # CREATE SCHEMA makes schema2 the current schema.
+    assert dcur.fetchall() == [seq2]
     assert [r.name for r in dcur.description] == list(seq1.keys())
 
     dcur.execute("SHOW SEQUENCES IN SCHEMA schema2")
